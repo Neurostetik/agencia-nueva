@@ -1,33 +1,27 @@
-import React, { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { supabase } from '../services/supabaseClient'
+import React, { useState } from 'react'
+import CarruselImagenes from './CarruselImagenes'
+import SimuladorROI from './SimuladorROI'
+import ValidadorNormativo from './ValidadorNormativo'
 import { generateContractDocx } from '../services/documentGenerator'
 import toast from 'react-hot-toast'
 
 export default function Fase0_Onboarding() {
-  const { id } = useParams()
   const [formData, setFormData] = useState({ empresa: '', contacto: '', email: '', presupuesto: '' })
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  async function loadData() {
-    const { data } = await supabase.from('proyectos').select('fase0_data').eq('id', id).single()
-    if (data?.fase0_data) setFormData(data.fase0_data)
-  }
-
   async function guardarYGenerar() {
     setLoading(true)
-    await supabase.from('proyectos').update({ fase0_data: formData, fase0_completada: true }).eq('id', id)
-    const blob = await generateContractDocx(formData)
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `contrato_${formData.empresa || 'cliente'}.docx`
-    a.click()
-    toast.success('Contrato generado y datos guardados')
+    try {
+      const blob = await generateContractDocx(formData)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `contrato_${formData.empresa || 'cliente'}.docx`
+      a.click()
+      toast.success('Contrato generado')
+    } catch (error) {
+      toast.error('Error al generar contrato')
+    }
     setLoading(false)
   }
 
@@ -43,6 +37,9 @@ export default function Fase0_Onboarding() {
           {loading ? 'Procesando...' : 'Guardar y generar contrato DOCX'}
         </button>
       </div>
+      <CarruselImagenes />
+      <SimuladorROI />
+      <ValidadorNormativo />
     </div>
   )
 }
